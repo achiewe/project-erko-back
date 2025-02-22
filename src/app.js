@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { PostInfo } from "./controllers/project-controller.js";
 import multer from "multer";
+import { PostStartupInfo } from "./controllers/startup-controller.js";
 
 dotenv.config();
 connect();
@@ -37,6 +38,12 @@ app.post(
   "/post",
   upload.fields([{ name: "additionalMedia" }, { name: "resume" }]),
   PostInfo
+);
+
+app.post(
+  "/startup",
+  upload.fields([{ name: "projectPresentation" }]),
+  PostStartupInfo
 );
 
 app.listen(4000, () => {
