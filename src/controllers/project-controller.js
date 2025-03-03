@@ -62,7 +62,7 @@ const sendEmailNotification = async (userInfo) => {
       Telegram: ${userInfo.telegram} 
       Instagram: ${userInfo.instagram} 
       About: ${userInfo.about} 
-      Resonate: ${userInfo.resonate} 
+      Do you resonate with Erkos aesthetics?: ${userInfo.resonate} 
       Privacy: ${userInfo.privacy}`,
       attachments: [], // Empty array for attachments
     };
