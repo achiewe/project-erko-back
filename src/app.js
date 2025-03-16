@@ -2,6 +2,7 @@ import express from "express";
 import connect from "./database/mongo.js";
 import dotenv from "dotenv";
 import cors from "cors";
+import bodyParser from "body-parser";
 import { PostInfo } from "./controllers/project-controller.js";
 import multer from "multer";
 import { PostStartupInfo } from "./controllers/startup-controller.js";
@@ -11,12 +12,8 @@ dotenv.config();
 connect();
 
 const app = express();
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000", // Default to localhost for development
-  methods: process.env.CORS_METHODS || "GET,POST,PUT,DELETE",
-  allowedHeaders: process.env.CORS_HEADERS || "Content-Type,Authorization"
-}));
-
+app.use(cors());
+app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -57,7 +54,4 @@ app.post(
   PostHelpInfo
 );
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(process.env.PORT || 4000);
