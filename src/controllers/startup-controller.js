@@ -1,15 +1,39 @@
 import StartupFormSubmission from "../models/startupFormSubmission.js";
 import nodemailer from "nodemailer";
+import cloudinary from "cloudinary";
+import streamifier from "streamifier";
+
+// Cloudinary Configuration
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Upload function
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.v2.uploader.upload_stream(
+      { folder: "startup_submissions" }, // Organize in a folder
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+};
 
 export const PostStartupInfo = async (req, res) => {
   try {
-    const { fullName, email, phone, country, aboutYourStartup, whyYou } =
-      req.body;
-    const projectPresentation = req.files?.projectPresentation
-      ? req.files.projectPresentation[0].path
-      : null; // Handle file if it exists
+    const { fullName, email, phone, country, aboutYourStartup, whyYou } = req.body;
+    
+    let projectPresentationUrl = null;
+    if (req.files?.projectPresentation) {
+      projectPresentationUrl = await uploadToCloudinary(req.files.projectPresentation[0].buffer);
+    }
 
-    // Save the form submission to MongoDB
+    // Save to MongoDB
     const newSubmission = new StartupFormSubmission({
       fullName,
       email,
@@ -17,24 +41,22 @@ export const PostStartupInfo = async (req, res) => {
       country,
       aboutYourStartup,
       whyYou,
-      projectPresentation,
+      projectPresentation: projectPresentationUrl,
     });
 
     await newSubmission.save();
-
     await sendStartupEmailNotification(newSubmission);
 
-    res.status(201).json({ message: "Form submitted successfully!" });
+    res.status(201).json({ message: "Form submitted successfully!", projectPresentationUrl });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error processing startup form:", error);
     res.status(500).json({ message: "Info cannot be posted" });
   }
 };
 
-// Email notification function
+// Send Email Notification
 const sendStartupEmailNotification = async (userInfo) => {
   try {
-    // Create a transporter to send the email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -47,7 +69,7 @@ const sendStartupEmailNotification = async (userInfo) => {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_TO,
       subject: "New Startup Form Submission",
-      text: `A new Startup form has been submitted by: 
+      text: `A new Startup form has been submitted:
         Name: ${userInfo.fullName} 
         Email: ${userInfo.email} 
         Phone: ${userInfo.phone} 
@@ -58,10 +80,7 @@ const sendStartupEmailNotification = async (userInfo) => {
     };
 
     if (userInfo.projectPresentation) {
-      mailOptions.attachments.push({
-        filename: userInfo.projectPresentation.split("/").pop(),
-        path: userInfo.projectPresentation,
-      });
+      mailOptions.attachments.push({ filename: "projectPresentation", path: userInfo.projectPresentation });
     }
 
     await transporter.sendMail(mailOptions);

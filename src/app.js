@@ -51,17 +51,9 @@ app.get("/", (req, res) => {
 app.use("/uploads", express.static("uploads"));
 
 // Handle form submissions with file uploads
-app.post(
-  "/post",
-  upload.fields([{ name: "additionalMedia" }, { name: "resume" }]),
-  PostInfo
-);
+app.post("/post", upload.fields([{ name: "additionalMedia" }, { name: "resume" }]), PostInfo);
 
-app.post(
-  "/startup",
-  upload.fields([{ name: "projectPresentation" }]),
-  PostStartupInfo
-);
+app.post("/startup", upload.fields([{ name: "projectPresentation" }]), PostStartupInfo);
 
 app.post("/help", upload.single("additionalHelpMedia"), async (req, res) => {
   try {
