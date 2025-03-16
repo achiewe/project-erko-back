@@ -12,22 +12,7 @@ dotenv.config();
 connect();
 
 const app = express();
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "http://localhost:3000");
-  res.header("Access-Control-Allow-Methods", process.env.CORS_METHODS || "GET,POST,PUT,DELETE");
-  res.header("Access-Control-Allow-Headers", process.env.CORS_HEADERS || "Content-Type,Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
-  
-  // Handle preflight requests
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-  
-  next();
-});
-console.log("🚀 CORS ORIGIN:", process.env.CORS_ORIGIN);
-console.log("🚀 CORS METHODS:", process.env.CORS_METHODS);
-console.log("🚀 CORS HEADERS:", process.env.CORS_HEADERS);
+app.use(cors());
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
