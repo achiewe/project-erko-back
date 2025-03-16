@@ -32,12 +32,25 @@ export const PostInfo = async (req, res) => {
     let additionalMediaUrl = null;
     let resumeUrl = null;
 
-    // Upload files to Cloudinary
+    let additionalMediaBuffer = null;
+    let additionalMediaName = null;
+    let resumeBuffer = null;
+    let resumeName = null;
+
+    // If additional media file exists, store its buffer and name
     if (req.files?.additionalMedia) {
-      additionalMediaUrl = await uploadToCloudinary(req.files.additionalMedia[0].buffer);
+      const file = req.files.additionalMedia[0];
+      additionalMediaBuffer = file.buffer;
+      additionalMediaName = file.originalname;
+      additionalMediaUrl = await uploadToCloudinary(file.buffer);
     }
+
+    // If resume file exists, store its buffer and name
     if (req.files?.resume) {
-      resumeUrl = await uploadToCloudinary(req.files.resume[0].buffer);
+      const file = req.files.resume[0];
+      resumeBuffer = file.buffer;
+      resumeName = file.originalname;
+      resumeUrl = await uploadToCloudinary(file.buffer);
     }
 
     // Save to MongoDB
@@ -55,7 +68,9 @@ export const PostInfo = async (req, res) => {
     });
 
     await newSubmission.save();
-    await sendEmailNotification(newSubmission);
+
+    // Pass file buffers and names to email function
+    await sendEmailNotification(newSubmission, additionalMediaBuffer, additionalMediaName, resumeBuffer, resumeName);
 
     res.status(201).json({ message: "Form submitted successfully!", additionalMediaUrl, resumeUrl });
   } catch (error) {
@@ -65,7 +80,7 @@ export const PostInfo = async (req, res) => {
 };
 
 // Send Email Notification
-const sendEmailNotification = async (userInfo) => {
+const sendEmailNotification = async (userInfo, additionalMediaBuffer, additionalMediaName, resumeBuffer, resumeName) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -80,22 +95,31 @@ const sendEmailNotification = async (userInfo) => {
       to: process.env.EMAIL_TO,
       subject: "New Form Submission",
       text: `A new form has been submitted:
-        Name: ${userInfo.name} 
-        Email: ${userInfo.email} 
-        Phone: ${userInfo.phone} 
-        Telegram: ${userInfo.telegram} 
-        Instagram: ${userInfo.instagram} 
-        About: ${userInfo.about} 
-        Resonate: ${userInfo.resonate} 
-        Privacy: ${userInfo.privacy}`,
+        - Name: ${userInfo.name}
+        - Email: ${userInfo.email}
+        - Phone: ${userInfo.phone}
+        - Telegram: ${userInfo.telegram}
+        - Instagram: ${userInfo.instagram}
+        - About: ${userInfo.about}
+        - Resonate: ${userInfo.resonate}
+        - Privacy: ${userInfo.privacy}`,
       attachments: [],
     };
 
-    if (userInfo.additionalMedia) {
-      mailOptions.attachments.push({ filename: "additionalMedia", path: userInfo.additionalMedia });
+    // Attach additional media file if present
+    if (additionalMediaBuffer) {
+      mailOptions.attachments.push({
+        filename: additionalMediaName || "additionalMedia",
+        content: additionalMediaBuffer,
+      });
     }
-    if (userInfo.resume) {
-      mailOptions.attachments.push({ filename: "resume", path: userInfo.resume });
+
+    // Attach resume file if present
+    if (resumeBuffer) {
+      mailOptions.attachments.push({
+        filename: resumeName || "resume.pdf",
+        content: resumeBuffer,
+      });
     }
 
     await transporter.sendMail(mailOptions);
@@ -104,3 +128,4 @@ const sendEmailNotification = async (userInfo) => {
     console.error("❌ Error sending email:", error);
   }
 };
+
