@@ -11,7 +11,12 @@ dotenv.config();
 connect();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || "http://localhost:3000", // Default to localhost for development
+  methods: process.env.CORS_METHODS || "GET,POST,PUT,DELETE",
+  allowedHeaders: process.env.CORS_HEADERS || "Content-Type,Authorization"
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -52,4 +57,7 @@ app.post(
   PostHelpInfo
 );
 
-app.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
