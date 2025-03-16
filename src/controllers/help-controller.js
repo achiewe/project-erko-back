@@ -29,17 +29,35 @@ const sendHelpEmailNotification = async (userInfo) => {
       },
     });
 
+    // Create email body with a clickable link
+    let emailBody = `
+      A new Help form has been submitted:\n
+      - Description: ${userInfo.tellUsHelp}\n
+    `;
+
+    const attachments = [];
+
+    // If there is an uploaded file, add a link or attach it
+    if (userInfo.additionalHelpMedia) {
+      emailBody += `- File: <a href="${userInfo.additionalHelpMedia}" target="_blank">Download File</a>\n`;
+
+      // Attach file for direct download
+      attachments.push({
+        filename: userInfo.additionalHelpMedia.split("/").pop(), // Extract filename from URL
+        path: userInfo.additionalHelpMedia, // Cloudinary URL
+      });
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_TO,
       subject: "New Help Form Submission",
-      text: `A new Help form has been submitted:
-        - Description: ${userInfo.tellUsHelp}
-        - File: ${userInfo.additionalHelpMedia}`,
+      html: emailBody, // Use HTML format for clickable links
+      attachments,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully!");
+    console.log("✅ Email sent successfully with attachments!");
   } catch (error) {
     console.error("❌ Error sending email:", error);
   }
