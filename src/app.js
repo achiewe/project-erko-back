@@ -12,7 +12,11 @@ dotenv.config();
 connect();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || "http://localhost:3000", // Default for local dev
+  methods: process.env.CORS_METHODS || "GET,POST,PUT,DELETE",
+  allowedHeaders: process.env.CORS_HEADERS || "Content-Type,Authorization"
+}));
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
