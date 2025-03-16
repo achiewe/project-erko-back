@@ -68,9 +68,9 @@ app.post("/help", upload.single("additionalHelpMedia"), async (req, res) => {
       additionalHelpMedia: fileUrl, // Store Cloudinary file URL
     };
 
-    // Call your controller to handle DB storage
-    const response = await PostHelpInfo(formData);
-    
+    // Call controller with file buffer
+    const response = await PostHelpInfo(formData, req.file);
+
     res.status(201).json({ message: "Form submitted successfully!", fileUrl });
   } catch (error) {
     console.error("❌ Error uploading file:", error);

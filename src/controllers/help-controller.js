@@ -1,7 +1,7 @@
 import HelpFormSubmission from "../models/helpFormSubmission.js";
 import nodemailer from "nodemailer";
 
-export const PostHelpInfo = async (formData) => {
+export const PostHelpInfo = async (formData, file) => {
   try {
     const newSubmission = new HelpFormSubmission({
       tellUsHelp: formData.tellUsHelp,
@@ -9,7 +9,9 @@ export const PostHelpInfo = async (formData) => {
     });
 
     await newSubmission.save();
-    await sendHelpEmailNotification(newSubmission);
+
+    // Pass file details to email function
+    await sendHelpEmailNotification(newSubmission, file);
 
     return { message: "Form submitted successfully!" };
   } catch (error) {
@@ -19,7 +21,7 @@ export const PostHelpInfo = async (formData) => {
 };
 
 // Email notification function
-const sendHelpEmailNotification = async (userInfo) => {
+const sendHelpEmailNotification = async (userInfo, file) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -29,36 +31,27 @@ const sendHelpEmailNotification = async (userInfo) => {
       },
     });
 
-    // Create email body with a clickable link
-    let emailBody = `
-      A new Help form has been submitted:\n
-      - Description: ${userInfo.tellUsHelp}\n
-    `;
-
-    const attachments = [];
-
-    // If there is an uploaded file, add a link or attach it
-    if (userInfo.additionalHelpMedia) {
-      emailBody += `- File: <a href="${userInfo.additionalHelpMedia}" target="_blank">Download File</a>\n`;
-
-      // Attach file for direct download
-      attachments.push({
-        filename: userInfo.additionalHelpMedia.split("/").pop(), // Extract filename from URL
-        path: userInfo.additionalHelpMedia, // Cloudinary URL
-      });
-    }
-
+    // Define the email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_TO,
       subject: "New Help Form Submission",
-      html: emailBody, // Use HTML format for clickable links
-      attachments,
+      text: `A new Help form has been submitted:
+        - Description: ${userInfo.tellUsHelp}`,
+      attachments: file
+        ? [
+            {
+              filename: file.originalname, // Keep original file name
+              content: file.buffer, // Attach the file content
+            },
+          ]
+        : [], // If no file, do not attach anything
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully with attachments!");
+    console.log("✅ Email sent successfully with attachment!");
   } catch (error) {
     console.error("❌ Error sending email:", error);
   }
 };
+
