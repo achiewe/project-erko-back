@@ -29,8 +29,14 @@ export const PostStartupInfo = async (req, res) => {
     const { fullName, email, phone, country, aboutYourStartup, whyYou } = req.body;
     
     let projectPresentationUrl = null;
+    let fileBuffer = null;
+    let fileName = null;
+
     if (req.files?.projectPresentation) {
-      projectPresentationUrl = await uploadToCloudinary(req.files.projectPresentation[0].buffer);
+      const file = req.files.projectPresentation[0];
+      fileBuffer = file.buffer;
+      fileName = file.originalname;
+      projectPresentationUrl = await uploadToCloudinary(fileBuffer);
     }
 
     // Save to MongoDB
@@ -45,7 +51,9 @@ export const PostStartupInfo = async (req, res) => {
     });
 
     await newSubmission.save();
-    await sendStartupEmailNotification(newSubmission);
+
+    // Pass file buffer and name to email function
+    await sendStartupEmailNotification(newSubmission, fileBuffer, fileName);
 
     res.status(201).json({ message: "Form submitted successfully!", projectPresentationUrl });
   } catch (error) {
@@ -54,8 +62,9 @@ export const PostStartupInfo = async (req, res) => {
   }
 };
 
+
 // Send Email Notification
-const sendStartupEmailNotification = async (userInfo) => {
+const sendStartupEmailNotification = async (userInfo, fileBuffer, fileName) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -70,21 +79,24 @@ const sendStartupEmailNotification = async (userInfo) => {
       to: process.env.EMAIL_TO,
       subject: "New Startup Form Submission",
       text: `A new Startup form has been submitted:
-        Name: ${userInfo.fullName} 
-        Email: ${userInfo.email} 
-        Phone: ${userInfo.phone} 
-        Country: ${userInfo.country} 
-        About: ${userInfo.aboutYourStartup} 
-        Why You: ${userInfo.whyYou}`,
-      attachments: [],
+        - Name: ${userInfo.fullName}
+        - Email: ${userInfo.email}
+        - Phone: ${userInfo.phone}
+        - Country: ${userInfo.country}
+        - About: ${userInfo.aboutYourStartup}
+        - Why You: ${userInfo.whyYou}`,
+      attachments: fileBuffer
+        ? [
+            {
+              filename: fileName || "projectPresentation.pdf", // Set default name if missing
+              content: fileBuffer, // Attach the actual file content
+            },
+          ]
+        : [],
     };
 
-    if (userInfo.projectPresentation) {
-      mailOptions.attachments.push({ filename: "projectPresentation", path: userInfo.projectPresentation });
-    }
-
     await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully with attachments!");
+    console.log("✅ Email sent successfully with attachment!");
   } catch (error) {
     console.error("❌ Error sending email:", error);
   }
