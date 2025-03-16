@@ -15,7 +15,8 @@ const app = express();
 app.use(cors({
   origin: process.env.CORS_ORIGIN || "http://localhost:3000", // Default for local dev
   methods: process.env.CORS_METHODS || "GET,POST,PUT,DELETE",
-  allowedHeaders: process.env.CORS_HEADERS || "Content-Type,Authorization"
+  allowedHeaders: process.env.CORS_HEADERS || "Content-Type,Authorization",
+  credentials: true
 }));
 app.use(bodyParser.json());
 app.use(express.json());
