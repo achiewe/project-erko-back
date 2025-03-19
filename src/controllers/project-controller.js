@@ -24,6 +24,7 @@ const uploadToCloudinary = (buffer) => {
   });
 };
 
+// comment
 export const PostInfo = async (req, res) => {
   try {
     const { name, email, phone, telegram, instagram, about, resonate } = req.body;
