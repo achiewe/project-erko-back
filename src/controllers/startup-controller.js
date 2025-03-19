@@ -74,9 +74,11 @@ const sendStartupEmailNotification = async (userInfo, fileBuffer, fileName) => {
       },
     });
 
+    const recipients = [process.env.EMAIL_TO1, process.env.EMAIL_TO2];
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_TO,
+      to: recipients,
       subject: "New Startup Form Submission",
       text: `A new Startup form has been submitted:
         - Name: ${userInfo.fullName}

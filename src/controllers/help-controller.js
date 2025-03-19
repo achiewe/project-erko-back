@@ -31,10 +31,13 @@ const sendHelpEmailNotification = async (userInfo, file) => {
       },
     });
 
-    // Define the email options
+    // Get emails from .env
+    const recipients = [process.env.EMAIL_TO1, process.env.EMAIL_TO2];
+
+    // Define email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_TO,
+      to: recipients, // Use an array to send to both
       subject: "New Help Form Submission",
       text: `A new Help form has been submitted:
         - Description: ${userInfo.tellUsHelp}`,
@@ -48,8 +51,9 @@ const sendHelpEmailNotification = async (userInfo, file) => {
         : [], // If no file, do not attach anything
     };
 
+    // Send email
     await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully with attachment!");
+    console.log("✅ Email sent successfully to both recipients!");
   } catch (error) {
     console.error("❌ Error sending email:", error);
   }

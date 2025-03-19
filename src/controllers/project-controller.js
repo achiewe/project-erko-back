@@ -91,9 +91,12 @@ const sendEmailNotification = async (userInfo, additionalMediaBuffer, additional
       },
     });
 
+     // Get emails from .env
+     const recipients = [process.env.EMAIL_TO1, process.env.EMAIL_TO2];
+     
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_TO,
+      to: recipients,
       subject: "New Form Submission",
       text: `A new form has been submitted:
         - Name: ${userInfo.name}
