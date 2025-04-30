@@ -12,6 +12,7 @@ const formSubmissionSchema = new Schema(
     privacy: { type: Boolean, required: true },
     additionalMedia: { type: String, required: false }, // File URL
     resume: { type: String, required: false }, // File URL
+    type: { type: String, required: true },
   },
   { timestamps: true }
 );

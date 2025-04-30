@@ -27,7 +27,7 @@ const uploadToCloudinary = (buffer) => {
 // comment
 export const PostInfo = async (req, res) => {
   try {
-    const { name, email, phone, telegram, instagram, about, resonate } = req.body;
+    const { name, email, phone, telegram, instagram, about, resonate, type } = req.body;
     const privacy = req.body.privacy === "true"; // Convert string to boolean
 
     let additionalMediaUrl = null;
@@ -66,12 +66,13 @@ export const PostInfo = async (req, res) => {
       privacy,
       additionalMedia: additionalMediaUrl,
       resume: resumeUrl,
+      type,
     });
 
     await newSubmission.save();
 
     // Pass file buffers and names to email function
-    await sendEmailNotification(newSubmission, additionalMediaBuffer, additionalMediaName, resumeBuffer, resumeName);
+    await sendEmailNotification(newSubmission, additionalMediaBuffer, additionalMediaName, resumeBuffer, resumeName, type);
 
     res.status(201).json({ message: "Form submitted successfully!", additionalMediaUrl, resumeUrl });
   } catch (error) {
@@ -81,7 +82,7 @@ export const PostInfo = async (req, res) => {
 };
 
 // Send Email Notification
-const sendEmailNotification = async (userInfo, additionalMediaBuffer, additionalMediaName, resumeBuffer, resumeName) => {
+const sendEmailNotification = async (userInfo, additionalMediaBuffer, additionalMediaName, resumeBuffer, resumeName, type) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -97,8 +98,8 @@ const sendEmailNotification = async (userInfo, additionalMediaBuffer, additional
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: recipients,
-      subject: "New Form Submission",
-      text: `A new form has been submitted:
+      subject: `New Application for ${type}`,
+      text: `A new form has been submitted for the ${type} position:
         - Name: ${userInfo.name}
         - Email: ${userInfo.email}
         - Phone: ${userInfo.phone}
